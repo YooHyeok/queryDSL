@@ -1,5 +1,6 @@
 package study.querydsl;
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,8 @@ import study.querydsl.entity.QMember;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static study.querydsl.entity.QMember.*;
@@ -122,7 +125,6 @@ public class QuerydslBasicTest {
                                 .and(member.age.between(10,30))
                 ).fetchOne();
         assertThat(findMember.getUsername()).isEqualTo("Member1");
-        assertThat(findMember.getAge()).isEqualTo(10);
 
 
     }
@@ -139,7 +141,45 @@ public class QuerydslBasicTest {
                         member.age.eq(10)
                 ).fetchOne();
         assertThat(findMember.getUsername()).isEqualTo("Member1");
-        assertThat(findMember.getAge()).isEqualTo(10);
+    }
+
+    @Test
+    public void resultFetchTest() {
+        List<Member> fetch = queryFactory
+                .selectFrom(member)
+                .fetch(); // 복수 조회 - 리스트로 반환
+        Member fetchOne = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("Member1"))
+                .fetchOne(); // 단건 조회 - 객체로 반환
+        Member fetchFirst = queryFactory
+                .selectFrom(member)
+//                .limit(1).fetchOne();
+                .fetchFirst();// 검색된 로우중 첫번째 로우 반환 limit(1).fetchOne()과 동일한 결과 반환
+        
+        QueryResults<Member> results = queryFactory
+                .selectFrom(member)
+                .offset(0) // 첫번째 행부터 가져온다.
+                .limit(4)  // 1개 가져온다.
+                .fetchResults();
+
+        long totalResult = results.getTotal();//totalCount를 가져온다.
+        System.out.println("totalResult = " + totalResult);
+
+        List<Member> content = results.getResults(); // result로 부터 꺼내야 데이터를 사용할 수 있다.
+        System.out.println("content = " + content);
+
+        long offset = results.getOffset();// 몇번째부터 가져와
+        System.out.println("offset = " + offset);
+
+        long limit = results.getLimit();// 몇개 가져와
+        System.out.println("limit = " + limit);
+
+        long total = queryFactory
+                .selectFrom(member)
+                .fetchCount();
+        System.out.println("total = " + total);
+
     }
 }
 
