@@ -296,5 +296,58 @@ public class QuerydslBasicTest {
         assertThat(teamB.get(member.age.avg())).isEqualTo(35); //Team B는 30살 40살이 존재한다.
     }
 
+    /**
+     * join 구문 이너조인(innerJoin)
+     * 팀 A에 소속된 모든 회원
+     */
+    @Test
+    public void innerJoin() {
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team) //혹은 innerJoin()
+                .where(team.name.eq("teamA"))
+                .fetch();
+        System.out.println("result = " + result);
+        assertThat(result)
+                .extracting("username") // 1. username이
+                .containsExactly("Member1", "Member2"); // 2. Member1과 Member2 인지 검증
+    }
+
+    /**
+     * join 구문 레프트조인(leftJoin)
+     * 팀 A에 소속된 모든 회원
+     */
+    @Test
+    public void leftJoin() {
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+        System.out.println("result = " + result);
+        assertThat(result)
+                .extracting("username") // 1. username이
+                .containsExactly("Member1", "Member2"); // 2. Member1과 Member2 인지 검증
+    }
+
+    /**
+     * join 구문 세타조인(theta-cross Join)
+     * 팀 A에 소속된 모든 회원
+     */
+    @Test
+    public void thetaJoin() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+        System.out.println("result = " + result);
+        assertThat(result)
+                .extracting("username") // 1. username이
+                .containsExactly("teamA", "teamB"); // 2. Member1과 Member2 인지 검증
+    }
 }
 
