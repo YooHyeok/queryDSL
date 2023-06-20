@@ -17,7 +17,6 @@ import javax.persistence.EntityManager;
 import static org.assertj.core.api.Assertions.*;
 import static study.querydsl.entity.QMember.*;
 
-
 /**
  *
  * queryDSL은 결과적으로 JPQL로 빌더한다.
@@ -61,13 +60,13 @@ public class QuerydslBasicTest {
         assertThat(findMember.getId()).isEqualTo(3L);
 
     }
-    
+
     @Test
     public void startJPQL() {
         // Member1 검색 (자동으로 flush해준다. JPQL은 직접 쿼리를 날리는것이기 때문에 clear 즉, 1차캐시와는 상관이 없다.)
         Member findMember = em.createQuery("select m from Member m where m.username = :username", Member.class)
                 .setParameter("username", "Member1")
-                        .getSingleResult();
+                .getSingleResult();
         assertThat(findMember.getUsername()).isEqualTo("Member1");
     }
 
@@ -107,5 +106,40 @@ public class QuerydslBasicTest {
         assertThat(findMember.getUsername()).isEqualTo("Member1");
     }
 
+    /** 검색조건 쿼리
+     * eq() / and() / or() / isNotNull() / in() / notIn() / between()
+     * like("value%") / contains("value") : '%value%' 검색
+     * startWith("value") : 'value%' 검색 / endWith("value") : '%value'
+     * goe(value) : column >= value / loe(value) : column <= value
+     * gt(value) : column > value / loe(value) : column < value
+     * */
+    @Test
+    public void search() {
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where( // username = "Member1" and (age between 10 and 30) / or연산도 가능
+                        member.username.eq("Member1")
+                                .and(member.age.between(10,30))
+                ).fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("Member1");
+        assertThat(findMember.getAge()).isEqualTo(10);
 
+
+    }
+
+    /**
+     * and() 대신 ,(쉼표)로 대체 가능
+     */
+    @Test
+    public void searchAndParam() {
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where( // username = "Member1" and (age between 10 and 30) / or연산도 가능
+                        member.username.eq("Member1"), // chain으로 .and() 대신 ,로 대체해서 사용할 수 있다.
+                        member.age.eq(10)
+                ).fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("Member1");
+        assertThat(findMember.getAge()).isEqualTo(10);
+    }
 }
+
