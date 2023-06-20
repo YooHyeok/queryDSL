@@ -15,7 +15,15 @@ import study.querydsl.entity.Team;
 import javax.persistence.EntityManager;
 
 import static org.assertj.core.api.Assertions.*;
+import static study.querydsl.entity.QMember.*;
 
+
+/**
+ *
+ * queryDSL은 결과적으로 JPQL로 빌더한다.
+ * application.yml에 use_sql_comments : true를 추가하면 JPQ의 힌트가 나간다 (주석형태)
+ *
+ */
 @SpringBootTest
 @Transactional
 //@Commit
@@ -62,11 +70,11 @@ public class QuerydslBasicTest {
                         .getSingleResult();
         assertThat(findMember.getUsername()).isEqualTo("Member1");
     }
-    
+
     @Test
     public void startQuerydsl() {
 //        JPAQueryFactory queryFactory = new JPAQueryFactory(em); // 전역변수로 선언 후 EachBefore 에서 초기화한다.
-        QMember m = new QMember("m");
+        QMember m = new QMember("m"); // m은 alias로 사용된다. 동일 테이블을 조인할 경우 바꿔서 사용한다.
         Member findMember = queryFactory
                 .select(m)
                 .from(m)
@@ -74,4 +82,30 @@ public class QuerydslBasicTest {
                 .fetchOne();
         assertThat(findMember.getUsername()).isEqualTo("Member1");
     }
+
+    /** qType을 new연산자 대신 QMember.member로 사용 */
+    @Test
+    public void qTypeDeclaration() {
+        QMember m = QMember.member; //static Import로 사용 가능
+        Member findMember = queryFactory
+                .select(m)
+                .from(m)
+                .where(m.username.eq("Member1")) //querydsl은 preparedStatement에의해 자동으로 파라미터 바인딩 해준다.
+                .fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("Member1");
+    }
+
+    /** QMember.member 직접 주입 및 스태틱 임포트 */
+    @Test
+    public void qTypeStaticImport() {
+//        QMember m = QMember.member; //static Import로 사용 가능
+        Member findMember = queryFactory
+                .select(member)
+                .from(member)
+                .where(member.username.eq("Member1")) //querydsl은 preparedStatement에의해 자동으로 파라미터 바인딩 해준다.
+                .fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("Member1");
+    }
+
+
 }
