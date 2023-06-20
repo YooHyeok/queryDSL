@@ -16,6 +16,8 @@ import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import java.util.List;
 
@@ -396,6 +398,41 @@ public class QuerydslBasicTest {
         for (Tuple tuple : result) {
             System.out.println("tuple = " + tuple);
         }
+    }
+
+    /**
+     * 패치 조인 미적용 (연관관계 엔터티가 끌려오지 않는다.)
+     */
+    @PersistenceUnit
+    EntityManagerFactory emf;
+    @Test
+    public void fetchJoinNo() {
+        em.flush();
+        em.clear(); // 페치조인 테스트시 데이터 초기화
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("Member1"))
+                .fetchOne();
+        System.out.println("findMember = " + findMember);
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());// 1차캐시에 로딩된 엔터티인지 초기화안된 엔터티인지 유무 확인
+        assertThat(loaded).as("패치조인 미적용").isFalse();
+    }
+
+    /**
+     * 패치 조인 적용
+     */
+    @Test
+    public void fetchJoinUse() {
+        em.flush();
+        em.clear(); // 페치조인 테스트시 데이터 초기화
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.username.eq("Member1"))
+                .fetchOne();
+        System.out.println("findMember = " + findMember);
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());// 1차캐시에 로딩된 엔터티인지 초기화안된 엔터티인지 유무 확인
+        assertThat(loaded).as("패치조인 적용").isTrue();
     }
 }
 
