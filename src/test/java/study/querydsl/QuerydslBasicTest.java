@@ -1,6 +1,7 @@
 package study.querydsl;
 
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
+import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
@@ -19,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static study.querydsl.entity.QMember.*;
+import static study.querydsl.entity.QTeam.*;
 
 /**
  *
@@ -114,7 +117,7 @@ public class QuerydslBasicTest {
      * like("value%") / contains("value") : '%value%' 검색
      * startWith("value") : 'value%' 검색 / endWith("value") : '%value'
      * goe(value) : column >= value / loe(value) : column <= value
-     * gt(value) : column > value / loe(value) : column < value
+     * gt(value) : column > value / lt(value) : column < value
      * */
     @Test
     public void search() {
@@ -242,6 +245,55 @@ public class QuerydslBasicTest {
         assertThat(queryResults.getOffset()).isEqualTo(2);
         assertThat(queryResults.getResults().size()).isEqualTo(2);
         System.out.println("content = " + queryResults.getResults());
+    }
+
+    /**
+     * 집합(Tuple) : select 조회시 여러 데이터 타입을 조회하는 경우 tuple을 사용한다. (실무에서는 dto로 추출한다)
+     * Tuple인터페이스는 Querydsl 패키지 소속 튜플이다.
+     */
+    @Test
+    public void aggregation() {
+        List<Tuple> result = queryFactory
+                .select(
+                        member.count(), // 총개수
+                        member.age.sum(), // 총합계
+                        member.age.avg(), // 평균
+                        member.age.max(), // 최대값
+                        member.age.min() // 최소값
+                )
+                .from(member)
+                .fetch();
+        Tuple tuple = result.get(0);
+        assertThat(tuple.get(member.count())).isEqualTo(4);
+        assertThat(tuple.get(member.age.sum())).isEqualTo(100);
+        assertThat(tuple.get(member.age.avg())).isEqualTo(25);
+        assertThat(tuple.get(member.age.max())).isEqualTo(40);
+        assertThat(tuple.get(member.age.min())).isEqualTo(10);
+
+    }
+
+    /**
+     * GroupBy / having
+     * 팀의 이름과 각 팀의 평균 연령을 구하라.
+     */
+    @Test
+    public void group() {
+        List<Tuple> result = queryFactory
+                .select(
+                        team.name,
+                        member.age.avg()
+                )
+                .from(member)
+                .join(member.team, team)
+                .groupBy(team.name) // 2. team.name으로 그룹핑해라.
+                .having(team.id.lt(10)) // 1. having team의 id가 10보다 작은 데이터들 중
+                .fetch();
+        Tuple teamA = result.get(0);
+        Tuple teamB = result.get(1);
+        assertThat(teamA.get(team.name)).isEqualTo("teamA");
+        assertThat(teamA.get(member.age.avg())).isEqualTo(15); //Team A는 10살 20살이 존재한다.
+        assertThat(teamB.get(team.name)).isEqualTo("teamB");
+        assertThat(teamB.get(member.age.avg())).isEqualTo(35); //Team B는 30살 40살이 존재한다.
     }
 
 }
