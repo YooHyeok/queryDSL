@@ -207,5 +207,42 @@ public class QuerydslBasicTest {
         assertThat(member6.getUsername()).isEqualTo("Member6");
         assertThat(memberNull.getUsername()).isNull();
     }
+
+    /**
+     * 페이징1
+     * username 내림차순 정렬 후 2번째 행 부터 2개
+     * 결과 : id 가 4, 3 인 데이터 반환
+     */
+    @Test
+    public void paging1() {
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(2) // 2번째 행부터
+                .limit(2) // 2개 가져와
+                .fetch();
+        assertThat(result.size()).isEqualTo(2);
+        System.out.println("result = " + result);
+    }
+
+    /**
+     * 페이징2
+     * fetchResult로 페이징 정보 조회
+     */
+    @Test
+    public void paging2() {
+        QueryResults<Member> queryResults = queryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(2) // 2번째 행부터
+                .limit(2) // 2개 가져와
+                .fetchResults();
+        assertThat(queryResults.getTotal()).isEqualTo(4);
+        assertThat(queryResults.getLimit()).isEqualTo(2);
+        assertThat(queryResults.getOffset()).isEqualTo(2);
+        assertThat(queryResults.getResults().size()).isEqualTo(2);
+        System.out.println("content = " + queryResults.getResults());
+    }
+
 }
 
