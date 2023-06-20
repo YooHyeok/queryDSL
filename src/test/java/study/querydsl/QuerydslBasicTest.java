@@ -304,7 +304,11 @@ public class QuerydslBasicTest {
     public void innerJoin() {
         List<Member> result = queryFactory
                 .selectFrom(member)
-                .join(member.team, team) //혹은 innerJoin()
+                .join(member.team, team) //첫번째 인자와 두번째 인자의 id값 즉, team의 id가 일치하는 조건으로 조인한다.
+//                (연관관계에 있는 객체 기준으로 매핑되므로 on이 자동으로 걸림.)
+//                내부조인이면 where절에서 필터링하는것과 기능이 동일하다.
+
+//                .join(team).on(member.team.id.eq(team.id)) // 이렇게도 사용할 수 있다.
                 .where(team.name.eq("teamA"))
                 .fetch();
         System.out.println("result = " + result);
@@ -348,6 +352,50 @@ public class QuerydslBasicTest {
         assertThat(result)
                 .extracting("username") // 1. username이
                 .containsExactly("teamA", "teamB"); // 2. Member1과 Member2 인지 검증
+    }
+
+    /**
+     * 조인 - on절
+     * 조인 대상 필터링, 연관관계 없는 엔티티 외부 조인
+     * 예) 회원과 팀을 조인 하면서, 팀 이름이 teamA인 팀만 조인하고, 회원은 모두 조회한다.
+     * JPQL : select m, t from Member m left join m.team t on t.name = 'teamA'
+     */
+    @Test
+    public void joinOnFiltering() {
+        List<Tuple> joinResult = queryFactory
+                .select(member, team)
+                .from(member)
+//                .leftJoin(member.team, team) //첫번째 인자와 두번째 인자의 id값 즉, team의 id가 일치하는 조건으로 조인한다.
+//                (연관관계에 있는 객체 기준으로 매핑되므로 on이 자동으로 걸림.)
+                .leftJoin(team).on(member.team.id.eq(team.id)) // 이렇게도 사용할 수 있다.
+
+                .on(team.name.eq("teamA"))
+                .fetch();
+        for (Tuple tuple : joinResult) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    /**
+     * 연관관계가 없는 엔티티 외부 조인 (join구문에 마스터 테이블을 지정하고 on절을 통해 비교 조회)
+     * 예) 회원의 이름과 팀의 이름이 같은 대상 외부조인
+     * JPQL : select m, t from Member m left join Team t on m.username = t.name;
+     * SQL : select m.*, t.* from member m left join team t on m.username = t.name;
+     */
+
+    @Test
+    public void joinOnNoRelation() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team)
+                .on(member.username.eq(team.name))
+                .fetch();
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
     }
 }
 
