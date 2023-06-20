@@ -1,0 +1,32 @@
+# true 설정시 JPA 쿼리문 확인 가능
+#spring.jpa.show-sql=true
+# SQL 가독성 컬럼데이터 출력
+#decorator.datasource.p6spy.enable-logging: true
+
+#Backend 서버 통신포트 설정
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/querydsl
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      # DDL(create, alter, drop) 정의시 DB의 고유 기능을 사용할 수 있다.
+      ddl-auto: create
+
+    properties:
+      # JPA의 구현체인 Hibernate가 동작하면서 발생한 SQL의 가독성을 높여준다.
+      hibernate:
+#        format_sql: true
+#        show_sql: true
+#        highlight_sql: true
+#        validator.apply_to_ddl: false
+logging:
+#  level:
+#    org.hibernate.SQL: debug
+#    org.hibernate.type: trace

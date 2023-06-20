@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.entity.Hello;
 import study.querydsl.entity.QHello;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@Commit
 class QuerydslApplicationTests {
 
 //	@Autowired //스프링 환경에서 동작 가능
@@ -26,6 +28,8 @@ class QuerydslApplicationTests {
 	void contextLoads() {
 		Hello hello = new Hello();
 		em.persist(hello);
+		em.flush();
+		em.clear();
 
 		JPAQueryFactory query = new JPAQueryFactory(em); //최신 버전에서 권장
 //		QHello qHello = new QHello("h");
@@ -34,6 +38,7 @@ class QuerydslApplicationTests {
 						.selectFrom(qHello)
 						.fetchOne();
 
+		System.out.println("result = " + result);
 		assertThat(result).isEqualTo(result);
 		assertThat(result.getId()).isEqualTo(hello.getId());
 	}
