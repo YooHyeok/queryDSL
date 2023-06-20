@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
@@ -525,6 +526,44 @@ public class QuerydslBasicTest {
          * 2. 애플리케이션에서 쿼리를 2번 분리해서 실행한다.
          * 3. nativeQuery를 사용한다.
          */
+    }
+
+    /**
+     * CASE문 : simpleCase
+     */
+    @Test
+    public void simpleCase() {
+        List<String> simpleCase = queryFactory
+                .select(member.age
+                        .when(10)
+                        .then("열살")
+                        .when(20)
+                        .then("스무살")
+                        .otherwise("기타") // else문
+                ).from(member)
+                .fetch();
+        for (String s : simpleCase) {
+            System.out.println("s = " + s);
+            
+        }
+    }
+
+    /**
+     * CASE문 : complexCase (searchCase)
+     */
+    @Test
+    public void complexCase() {
+        List<String> complexCase = queryFactory
+                .select(new CaseBuilder()
+                        .when(member.age.between(0,20)).then("0~20살")
+                        .when(member.age.between(21,30)).then("21~30살")
+                        .otherwise("기타")
+                ).from(member)
+                .fetch();
+        for (String s : complexCase) {
+            System.out.println("s = " + s);
+
+        }
     }
 
 }
