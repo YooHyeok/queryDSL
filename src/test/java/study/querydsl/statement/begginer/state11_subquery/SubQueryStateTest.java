@@ -1,6 +1,7 @@
 package study.querydsl.statement.begginer.state11_subquery;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,6 +143,31 @@ public class SubQueryStateTest {
          * 2. 애플리케이션에서 쿼리를 2번 분리해서 실행한다.
          * 3. nativeQuery를 사용한다.
          */
+    }
+
+    /**
+     * 스칼라 서브쿼리 별칭 지정 <br/>
+     * 해당 별칭은 쿼리가 출력될 때 지정되지는 않으나 <br/>
+     * 내부적으로 DTO를 사용할때 필드명이 일치하지 않는경우 매핑을위해 사용한다.
+     */
+    @Test
+    public void selectSubqueryAlias() {
+        QMember memberSub = new QMember("memberSub"); //qtype생성
+        List<Tuple> result = queryFactory
+                .select(member.username.as("name"),
+                        ExpressionUtils.as(
+                                //JPAExpressions staticImport가능
+                                select(memberSub.age.avg())
+                                        .from(memberSub)
+                                , "age"
+                        )
+                )
+                .from(member)
+                .fetch();
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+
     }
 }
 
