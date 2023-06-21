@@ -921,5 +921,43 @@ public class QuerydslBasicTest {
             System.out.println("member1 = " + member1);
         }
     }
+
+    /**
+     * SQL Function() 호출 (사용자정의함수)
+     * username의 member라는 이름을 M으로 바꾼다.
+     */
+    @Test
+    public void sqlFunction() {
+        List<String> result = queryFactory
+                .select(
+                        Expressions
+                                .stringTemplate("function('replace', {0}, {1}, {2})", member.username, "Member", "M") //와일드카드 사용 불가능
+                ).from(member)
+                .fetch();
+        for (String s : result) {
+            System.out.println("s = " + s);
+            
+        }
+    }
+
+    /**
+     * SQL Function() 호출 (Ansi 표준)
+     * username을 소문자로 변경한 뒤 동등조건으로 비교한다.
+     */
+    @Test
+    public void sqlFunction2() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                .where(member.username.eq(
+//                        Expressions.stringTemplate("function('lower', {0})", member.username) //사용자정의 Function으로 H2Dialect로부터 상속받은 클래스에 등록해서 사용한다.
+                        member.username.lower() //ANSI 표준은 그냥 쓴다. (앞선 예제의 replace도 가능)
+                ))
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
 }
 
