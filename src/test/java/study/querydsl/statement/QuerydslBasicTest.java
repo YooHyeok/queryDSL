@@ -599,5 +599,41 @@ public class QuerydslBasicTest {
             System.out.println("s = " + s);
         }
     }
+
+    /** -------------------------------------------- 중급 문법 ----------------------------------------------- */
+
+    /**
+     * 단일컬럼 프로젝션
+     * 프로젝션 : Select할 대상 지정 <br/>
+     * 조회할 대상이 하나면 대상 타입으로 지정*/
+    @Test
+    public void simpleProjection() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                .fetch();
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    /**
+     * Tuple(튜플) 프로젝션
+     * 프로젝션 : Select할 대상 지정 <br/>
+     * 조회할 대상이 하나면 대상 타입으로 지정*/
+
+    @Test
+    public void tupleProjection() {
+        List<Tuple> result = queryFactory
+                .select(member.username, member.age)
+                .from(member)
+                .fetch();
+        for (Tuple tuple : result) {
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+            System.out.println("username = " + username);
+            System.out.println("age = " + age);
+        }
+    }
 }
 
