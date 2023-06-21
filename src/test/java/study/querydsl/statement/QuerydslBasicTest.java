@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
 import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
@@ -753,6 +754,27 @@ public class QuerydslBasicTest {
                 .fetch();
         for (UserDto userDto : result) {
             System.out.println("userDto = " + userDto);
+        }
+    }
+
+    /**
+     * 프로젝션 : @QueryProjection <br/>
+     * @QueryProjection : DTO의 생성자를 QType으로 Build한다. <br/>
+     * Projection.Constructor처럼 생성자를 사용하는 방식이다. <br/>
+     * 장점 : 컴파일 시점에 에러 캐치 (생성자 필드 타입, 갯수 등) <br/>
+     * 단점1 : DTO에 애노테이션을 선언하고 compileQuerydsl 빌드 해줘야한다. <br/>
+     * 단점2 : 아키텍처 문제(의존관계) 애노테이션을 선언하는 순간 Dto가 QueryDsl에 의존성을 갖게 된다.  <br/>
+     * DTO라는것은 기본적으로 값을 반환 받아서 Service나 Controller까지 도달할 수 있도록 해주는 순수한 객체인데,
+     * queryDsl에 대한 의존성을 갖게 된다는것이 순수하지 못한 객체가 되어버린다.
+     */
+    @Test
+    public void findDtoByQueryProjection() {
+        List<MemberDto> result = queryFactory
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
         }
     }
 
