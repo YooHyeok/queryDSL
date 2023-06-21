@@ -4,7 +4,9 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -787,8 +789,6 @@ public class QuerydslBasicTest {
         String usernameParam = "Member1";
         Integer ageParam = 10;
         List<Member> result = searchMember1(usernameParam, ageParam);
-        System.out.println(result);
-        System.out.println(result.size());
         assertThat(result.size()).isEqualTo(1);
     }
 
@@ -808,5 +808,43 @@ public class QuerydslBasicTest {
                 .fetch();
     }
 
+    /**
+     * 동적쿼리 - where 다중파라미터
+     * 장점1 : 쿼리의 재사용이 가능해진다.
+     * 장점2 : 쿼리의 가독성이 좋아진다.
+     * 장점3 : 쿼리의 조합이 가능해진다..
+     */
+    @Test
+    public void dynamicQuery_WhereParam() {
+        String usernameParam = "Member1";
+        Integer ageParam = 10;
+        List<Member> result = searchMember2(usernameParam, ageParam);
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMember2(String usernameCond, Integer ageCond) {
+        return queryFactory
+                .selectFrom(member)
+//                .where(usernameEq(usernameCond), ageEq(ageCond))
+                .where(allAndEq(usernameCond, ageCond))
+                .fetch();
+    }
+
+    private BooleanExpression usernameEq(String usernameCond) { // Predicate도 가능
+        return usernameCond == null ? null : member.username.eq(usernameCond); // 조건절에 null이 오면 무시된다.
+    }
+    private BooleanExpression ageEq(Integer ageCond) {
+        return ageCond == null ? null : member.age.eq(ageCond);
+    }
+
+    /** and연산 */
+    private BooleanExpression allAndEq(String usernameCond, Integer ageCond) {
+        return usernameEq(usernameCond).and(ageEq(ageCond));
+    }
+
+    /** or연산 */
+    private BooleanExpression allOrEq(String usernameCond, Integer ageCond) {
+        return usernameEq(usernameCond).or(ageEq(ageCond));
+    }
 }
 
