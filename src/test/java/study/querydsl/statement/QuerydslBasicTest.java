@@ -2,6 +2,8 @@ package study.querydsl.statement;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
 import study.querydsl.entity.QTeam;
@@ -635,5 +639,122 @@ public class QuerydslBasicTest {
             System.out.println("age = " + age);
         }
     }
+
+
+    /**
+     * JPQL 프로젝션 DTO
+     * new Operation을 사용한다.
+     * 풀 패키지명을 기재해야만 한다.
+     * 생성자 방식만 지원한다.
+     */
+    @Test
+    public void findDtoByJPQL() {
+        List<MemberDto> resultList = em.createQuery(
+                "select new study.querydsl.dto.MemberDto(m.username, m.age) from Member m",
+                        MemberDto.class
+                )
+                .getResultList();
+
+        for (MemberDto memberDto : resultList) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * queryDsl 프로젝션 DTO - 프로퍼티 접근 <br/>
+     * Projections.bean(DTO클래스명.class, qType.field1, qType.field2)
+     * @Data에 의한 Setter에 영향을 받아 값을 주입한다.<br/>
+     * DTO에 Setter가 없으면 값 주입이 불가능하다.
+     */
+    @Test
+    public void findDtoBySetter() {
+        List<MemberDto> result = queryFactory
+                .select(
+                        Projections.bean(
+                                MemberDto.class,
+                                member.username,
+                                member.age
+                        ))
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * queryDsl 프로젝션 DTO - 필드 접근 <br/>
+     * Projections.field(DTO클래스명.class, qType.field1, qType.field2) <br/>
+     * 필드명이 일치하는 필드에 매핑된다. (일치하지 않으면 일치하는 필드만 매핑)
+     * @Data에 의한 Constructor나 Setter에 영향을 받지 않고 바로 필드에 값을 주입한다.<br/>
+     * DTO에 Setter와 Contructor가 존재하지 않아도 값 주입이 된다. <br/>
+     */
+    @Test
+    public void findMemberDtoByField() {
+        List<MemberDto> result = queryFactory
+                .select(
+                        Projections.fields(
+//                                UserDto.class, // username 필드명이 맞지 않아 age에만 값이 매핑됨
+                                MemberDto.class,
+                                member.username,
+                                member.age)
+                ).from(member)
+                .fetch();
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * queryDsl 프로젝션 DTO - 필드 접근 <br/>
+     * 필드명이 일치하지 않는 필드에 .as()메소드를 사용하여 별칭을 붙혀 매핑할 수 있다.
+     * alias 기준은 DTO 필드명으로 기준을잡는다.
+     * 서브쿼리에서는 ExpressionUtils.as()를 활용한다.
+     * 메소드 매개변수로 JPAExpressions 서브쿼리를 담는다.
+     */
+    @Test
+    public void findUserDtoByField() {
+        QMember memberSub = new QMember("memberSub");
+        List<UserDto> result = queryFactory
+                .select(
+                        Projections.fields(
+                                UserDto.class, //필드명이 맞지 않아 age에만 값이 매핑됨
+                                member.username.as("name"), //username을 name의 별칭을 붙혀 매핑시킬 수 있다.
+                                ExpressionUtils.as(
+                                        JPAExpressions
+                                                .select(memberSub.age.max())
+                                                .from(memberSub)
+                                        , "age"
+                                )
+                        )
+                ).from(member)
+                .fetch();
+        for (UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+    
+
+    /**
+     * queryDsl 프로젝션 DTO - 생성자 접근 <br/>
+     * Projections.constructor(DTO클래스명.class, qType.field1, qType.field2) <br/>
+     * @Data에 의한 Constructor를 통해 값을 주입한다. <br/>
+     * DTO에 Constructor가 존재하지 않으면 값을 주입할 수 없다.<br/>
+     */
+    @Test
+    public void findDtoByConstructor() {
+        List<UserDto> result = queryFactory
+                .select(
+                        Projections.constructor(
+                                UserDto.class,
+                                member.username,
+                                member.age)
+                ).from(member)
+                .fetch();
+        for (UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
 }
 
