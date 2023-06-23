@@ -1,0 +1,63 @@
+package study.querydsl.dto;
+
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
+import study.querydsl.entity.Member;
+
+import javax.persistence.EntityManager;
+import java.util.List;
+import java.util.Optional;
+
+import static study.querydsl.entity.QMember.member;
+import static study.querydsl.entity.QTeam.team;
+
+/**
+ * [순수 JPA 리포지토리] <br/>
+ * git에 올라가지 않으므로 저장함. <br/>
+ * _build제거 후 out_production_study_querydsl_repository로 이동시켜준다.
+ */
+@Repository
+public class MemberJpaRepositroy_build {
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+//    public MemberJpaRepositroy(EntityManager em) { // 순수 자바 의존성 주입
+    public MemberJpaRepositroy_build(EntityManager em, JPAQueryFactory queryFactory) { // 스프링 컨테이너에 빈 등록후 의존성 주입
+        this.em = em;
+        this.queryFactory = queryFactory;
+    }
+    /** 회원 저장 (EntityManager) */
+    public void save(Member member) {
+        em.persist(member);
+    }
+    /** 회원 단건 조회 (EntityManager) */
+    public Optional<Member> findById(Long id) {
+        Member findMember = em.find(Member.class, id);
+        return Optional.ofNullable(findMember);
+    }
+    /** 회원 전체 조회 (JPQL) */
+    public List<Member> findAll() {
+        return em.createQuery("select m from Member m", Member.class)
+                .getResultList();
+    }
+    /** 회원이름으로 조건 조회 (JPQL) */
+    public List<Member> findByUsername(String username) {
+        return em.createQuery("select m from Member m where m.username = :username", Member.class)
+                .setParameter("username", username)
+                .getResultList();
+    }
+    /** 회원 전체 조회 (querydsl) */
+    public List<Member> findAll_Querydsl() {
+        return queryFactory
+                .selectFrom(member)
+                .fetch();
+    }
+    /** 회원이름으로 조건 조회 (querydsl) */
+    public List<Member> findByUsername_Querydsl(String username) {
+        return queryFactory.selectFrom(member)
+                .where(member.username.eq(username))
+                .fetch();
+    }
+}
