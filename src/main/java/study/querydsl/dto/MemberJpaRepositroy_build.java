@@ -116,8 +116,14 @@ public class MemberJpaRepositroy_build {
      * @param ageGoe
      * @return BooleanExpression : Predicate와는 다르게 컴포지션이 가능해진다.
      */
-    private BooleanExpression ageBetween(int ageLoe, int ageGoe) {
-        return ageLoe(ageLoe).and(ageGoe(ageGoe));
+    private BooleanExpression ageBetween(Integer ageGoe, Integer ageLoe) {
+        if (ageGoe == null) {
+            return ageLoe(ageLoe);
+        }
+        if (ageLoe == null) {
+            return ageGoe(ageGoe);
+        }
+        return ageGoe(ageGoe).and(ageLoe(ageLoe));
     }
     private BooleanExpression usernameEq(String username) {
         return StringUtils.hasText(username) ? member.username.eq(username): null;

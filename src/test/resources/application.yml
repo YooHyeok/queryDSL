@@ -4,9 +4,6 @@
 #decorator.datasource.p6spy.enable-logging: true
 
 #Backend 서버 통신포트 설정
-server:
-  port: 8081
-
 spring:
   profiles:
     active: test #테스트
