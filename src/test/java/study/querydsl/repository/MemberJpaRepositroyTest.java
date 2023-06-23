@@ -51,4 +51,29 @@ class MemberJpaRepositroyTest {
         assertThat(result4).containsExactly(member);
     }
 
+    /**
+     * 동적쿼리와 성능 최적화 조회 - Builder
+     */
+    @Test
+    public void  searchTest() {
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        em.persist(teamA);
+        em.persist(teamB);
+        Member member1 = new Member("Member1", 10, teamA);
+        Member member2 = new Member("Member2", 20, teamA);
+        Member member3 = new Member("Member3", 30, teamB);
+        Member member4 = new Member("Member4", 40, teamB);
+        em.persist(member1);
+        em.persist(member2);
+        em.persist(member3);
+        em.persist(member4);
+
+        MemberSearchCondition condition = new MemberSearchCondition();
+        condition.setAgeGoe(20);
+        condition.setAgeLoe(40);
+        condition.setTeamName("teamB");
+        List<MemberTeamDto> result = memberJpaRepositroy.searchByBuilder(condition);
+        assertThat(result).extracting("username").containsExactly("Member3","Member4");
+    }
 }
