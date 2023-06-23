@@ -16,6 +16,7 @@ import study.querydsl.entity.Member;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.function.LongSupplier;
 
 import static study.querydsl.entity.QMember.member;
 import static study.querydsl.entity.QTeam.team;
@@ -133,7 +134,14 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom {
          * -> 컨텐츠 사이즈가 페이지 사이즈 보다 작다.(쿼리 실행시 데이터 3개) <br/>
          * -> 3개를 totalCount로 사용 가능
          */
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchCount);
+//        return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
+//        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchCount);
+        return PageableExecutionUtils.getPage(content, pageable, new LongSupplier(){
+            @Override
+            public long getAsLong() {
+                return countQuery.fetchCount();
+            }
+        });
 //        return new PageImpl<>(content, pageable, total); //content, pageable, total 정보 page구현체 객체에 담아 모두반환
     }
 
