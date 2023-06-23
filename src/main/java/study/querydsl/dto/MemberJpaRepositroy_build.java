@@ -1,6 +1,7 @@
 package study.querydsl.dto;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -63,7 +64,7 @@ public class MemberJpaRepositroy_build {
     /** 동적 쿼리 - Builder 사용 */
     public List<MemberTeamDto> searchByBuilder(MemberSearchCondition condition) {
         BooleanBuilder builder = new BooleanBuilder();
-        if (StringUtils.hasText(condition.getUsername())) {
+        if (StringUtils.hasText(condition.getUsername())) { //StringUtils.hasText()는 null과 "" 모두 처리 가능
             builder.and(member.username.eq(condition.getUsername()));
         }
         if (StringUtils.hasText(condition.getTeamName())) {
@@ -88,4 +89,50 @@ public class MemberJpaRepositroy_build {
                 .where(builder)
                 .fetch();
     }
+    /** 동적 쿼리 - Builder 사용 */
+    public List<MemberTeamDto> searchByWhereCondition(MemberSearchCondition condition) {
+        return queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName")
+                ))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+//                        ageGoe(condition.getAgeGoe()),
+//                        ageLoe(condition.getAgeLoe())
+                        ageBetween(condition.getAgeLoe(),condition.getAgeGoe())
+                )
+                .fetch();
+    }
+
+    /**
+     * ageGoe와 ageLoe 조합
+     * @param ageLoe
+     * @param ageGoe
+     * @return BooleanExpression : Predicate와는 다르게 컴포지션이 가능해진다.
+     */
+    private BooleanExpression ageBetween(int ageLoe, int ageGoe) {
+        return ageLoe(ageLoe).and(ageGoe(ageGoe));
+    }
+    private BooleanExpression usernameEq(String username) {
+        return StringUtils.hasText(username) ? member.username.eq(username): null;
+    }
+
+    private BooleanExpression teamNameEq(String teamName) {
+        return StringUtils.hasText(teamName) ? team.name.eq(teamName): null;
+    }
+
+    private BooleanExpression ageGoe(Integer ageGoe) {
+        return ageGoe != null ? member.age.goe(ageGoe) : null;
+    }
+
+    private BooleanExpression ageLoe(Integer ageLoe) {
+        return ageLoe != null ? member.age.loe(ageLoe) : null;
+    }
+
 }
