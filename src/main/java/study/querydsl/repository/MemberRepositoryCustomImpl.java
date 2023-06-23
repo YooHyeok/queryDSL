@@ -2,14 +2,17 @@ package study.querydsl.repository;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
+import study.querydsl.entity.Member;
 
 import javax.persistence.EntityManager;
 import java.util.List;
@@ -111,16 +114,27 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();//Conten용쿼리
 
-        long total = queryFactory
+        JPAQuery<Member> countQuery = queryFactory
                 .select(member)
                 .from(member)
                 .leftJoin(member.team, team)
                 .where(usernameEq(condition.getUsername()),
                         teamNameEq(condition.getTeamName()),
                         ageBetween(condition.getAgeGoe(), condition.getAgeLoe())
-                ).fetchCount(); //Count용쿼리
-
-        return new PageImpl<>(content, pageable, total); //content, pageable, total 정보 page구현체 객체에 담아 모두반환
+                );
+//                .fetchCount(); //Count용쿼리
+        /**
+         * [PagebleExcutionUtils.getPage()] <br/>
+         * count 쿼리 생략 가능한 경우 생략해서 처리 <br/>
+         * 페이지 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때 <br/>
+         * 마지막 페이지 일 때(offset + 컨텐츠 사이즈를 더해서 전체 사이즈를 구한다) <br/>
+         * # 페이지 사이즈 : 페이지에 담을 row개수 <br/>
+         * -> 첫번째 페이지(100페이지) <br/>
+         * -> 컨텐츠 사이즈가 페이지 사이즈 보다 작다.(쿼리 실행시 데이터 3개) <br/>
+         * -> 3개를 totalCount로 사용 가능
+         */
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchCount);
+//        return new PageImpl<>(content, pageable, total); //content, pageable, total 정보 page구현체 객체에 담아 모두반환
     }
 
     /**
