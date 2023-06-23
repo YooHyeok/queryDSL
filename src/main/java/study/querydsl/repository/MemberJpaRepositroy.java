@@ -1,10 +1,13 @@
-package study.querydsl.dto;
+package study.querydsl.repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+import study.querydsl.dto.MemberSearchCondition;
+import study.querydsl.dto.MemberTeamDto;
+import study.querydsl.dto.QMemberTeamDto;
 import study.querydsl.entity.Member;
 
 import javax.persistence.EntityManager;
@@ -16,16 +19,14 @@ import static study.querydsl.entity.QTeam.team;
 
 /**
  * [순수 JPA 리포지토리] <br/>
- * git에 올라가지 않으므로 저장함. <br/>
- * _build제거 후 build_generated_querydsl_study_querydsl_repository로 이동시켜준다.
  */
 @Repository
-public class MemberJpaRepositroy_build {
+public class MemberJpaRepositroy {
     private final EntityManager em;
     private final JPAQueryFactory queryFactory;
 
 //    public MemberJpaRepositroy(EntityManager em) { // 순수 자바 의존성 주입
-    public MemberJpaRepositroy_build(EntityManager em, JPAQueryFactory queryFactory) { // 스프링 컨테이너에 빈 등록후 의존성 주입
+    public MemberJpaRepositroy(EntityManager em, JPAQueryFactory queryFactory) { // 스프링 컨테이너에 빈 등록후 의존성 주입
         this.em = em;
         this.queryFactory = queryFactory;
     }
@@ -61,10 +62,11 @@ public class MemberJpaRepositroy_build {
                 .where(member.username.eq(username))
                 .fetch();
     }
+
     /** 동적 쿼리 - Builder 사용 */
     public List<MemberTeamDto> searchByBuilder(MemberSearchCondition condition) {
         BooleanBuilder builder = new BooleanBuilder();
-        if (StringUtils.hasText(condition.getUsername())) { //StringUtils.hasText()는 null과 "" 모두 처리 가능
+        if (StringUtils.hasText(condition.getUsername())) {
             builder.and(member.username.eq(condition.getUsername()));
         }
         if (StringUtils.hasText(condition.getTeamName())) {
@@ -89,6 +91,7 @@ public class MemberJpaRepositroy_build {
                 .where(builder)
                 .fetch();
     }
+
     /** 동적 쿼리 - Builder 사용 */
     public List<MemberTeamDto> searchByWhereCondition(MemberSearchCondition condition) {
         return queryFactory
@@ -105,7 +108,7 @@ public class MemberJpaRepositroy_build {
                         teamNameEq(condition.getTeamName()),
 //                        ageGoe(condition.getAgeGoe()),
 //                        ageLoe(condition.getAgeLoe())
-                        ageBetween(condition.getAgeLoe(),condition.getAgeGoe())
+                        ageBetween(condition.getAgeGoe(),condition.getAgeLoe())
                 )
                 .fetch();
     }
@@ -140,5 +143,4 @@ public class MemberJpaRepositroy_build {
     private BooleanExpression ageLoe(Integer ageLoe) {
         return ageLoe != null ? member.age.loe(ageLoe) : null;
     }
-
 }
