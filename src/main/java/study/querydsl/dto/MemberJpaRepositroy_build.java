@@ -17,7 +17,7 @@ import static study.querydsl.entity.QTeam.team;
 /**
  * [순수 JPA 리포지토리] <br/>
  * git에 올라가지 않으므로 저장함. <br/>
- * _build제거 후 out_production_study_querydsl_repository로 이동시켜준다.
+ * _build제거 후 build_generated_querydsl_study_querydsl_repository로 이동시켜준다.
  */
 @Repository
 public class MemberJpaRepositroy_build {
